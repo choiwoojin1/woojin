@@ -20,4 +20,6 @@ public interface MDAO {
 
     int mDelete(String mId);
 
+
+    String idOverlap(String mId);
 }

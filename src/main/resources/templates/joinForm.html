@@ -40,12 +40,21 @@
 									<form action="mJoin" method="POST" enctype="multipart/form-data">
 										<div class="mb-3">
 											<label class="form-label">아이디</label>
-											<input class="form-control form-control-lg" type="text" name="mId" placeholder="Enter your ID" />
+											<input class="form-control form-control-lg" type="text" name="mId" placeholder="Enter your ID" id="mId">
+											<input type="button" class="form-control form-control-lg" value="중복체크" onclick="idOverlap()">
+											<br/><span id="confirmId"></span>
 										</div>
 										<div class="mb-3">
 											<label class="form-label">비밀번호</label>
-											<input class="form-control form-control-lg" type="password" name="mPw" placeholder="Enter your password" />
+											<input class="form-control form-control-lg" type="password" name="mPw" placeholder="Enter your password" id="mPw" onkeyup="pwRegExp()"/>
+											<br/><span id="pwRegExp"></span>
 										</div>
+										<div class="mb-3">
+											<label class="form-label">비밀번호확인</label>
+											<input class="form-control form-control-lg" type="password" name="mPw" placeholder="Enter your password" id="checkPw"  onkeyup="pwOverlap()"/>
+											<br/><span id="confirmPw"></span>
+										</div>
+
 										<div class="mb-3">
 											<label class="form-label">이름</label>
 											<input class="form-control form-control-lg" type="text" name="mName" placeholder="Enter your Name" />
@@ -60,7 +69,9 @@
 										</div>
 										<div class="mb-3">
 											<label class="form-label">이메일</label>
-											<input class="form-control form-control-lg" type="email" name="secuEmail" />
+											<input class="form-control form-control-lg" type="email" name="mEmail" id="mEmail" />
+											<span id="emailConfirmText">
+												<input type="button" class="form-control form-control-lg" value="인증" onclick="confirmEmail()"></span>
 										</div>
 
 
@@ -82,5 +93,146 @@
 	<script src="js/app.js"></script>
 
 </body>
+
+<script
+		src="https://code.jquery.com/jquery-3.6.0.js"
+		integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+		crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+
+	//아이디 중복체크
+	function idOverlap(){
+		let idCheck = document.getElementById("mId").value;
+		let confirmId = document.getElementById("confirmId");
+		let idPass = false;
+
+
+
+		$.ajax({
+			type : "POST" ,
+			url : "idOverlap" ,
+			data : { "mId" : idCheck } ,
+			async : false,
+			dataType : "text" ,
+			success :  function(data){
+				// 성공시
+				if(data=="OK"){
+					confirmId.style.color="#0000ff";
+					confirmId.innerHTML = "사용 가능한 아이디";
+					idPass = true;
+				} else {
+					confirmId.style.color="#ff0000";
+					confirmId.innerHTML = "사용 불가능한 아이디";
+					idPass = false;
+				}
+			} ,
+			error : function(){
+				// 실패시
+				alert("idOverlap함수 통신실패!");
+			}
+		});
+		return idPass;
+	}
+
+	// 비밀번호 정규식
+	function pwRegExp(){
+		let mPw = document.getElementById("mPw").value;
+		let pwRegExp = document.getElementById("pwRegExp");
+		let pwPass = false;
+
+		let num = mPw.search(/[0-9]/g);
+		let eng = mPw.search(/[a-z]/ig);
+		let spe = mPw.search(/[`~!@#$%^&*|\\\'\";:\/?]/gi);
+
+		/// 1234 567!q
+		if(mPw.length < 8 || mPw.length > 15){
+			pwRegExp.style.color="#ff0000";
+			pwRegExp.innerHTML = "8자리 ~ 15자리 이내로 입력해주세요!";
+
+
+		} else if(mPw.search(/\s/) != -1) {
+			pwRegExp.style.color="#ff0000";
+			pwRegExp.innerHTML = "비밀번호는 공백 없이 입력해주세요!";
+		} else if(num < 0 || eng < 0 || spe < 0){
+			pwRegExp.style.color="#ff0000";
+			pwRegExp.innerHTML = "영문, 숫자, 특수문자를 혼합하여 입력해주세요!";
+		} else {
+			pwRegExp.style.color="#0000ff";
+			pwRegExp.innerHTML = "적절한 비밀번호 입니다!";
+			pwPass = true;
+		}
+		return pwPass;
+	}
+
+	// 비밀번호 일치여부 확인
+	function pwOverlap(){
+		let mPw = document.getElementById("mPw").value;
+		let pwRegExp = document.getElementById("pwRegExp");
+
+		let checkPw = document.getElementById("checkPw").value;
+		let confirmPw = document.getElementById("confirmPw");
+
+		let pwPass =false;
+
+		pwRegExp.innerHTML = "";
+
+		if(mPw==checkPw){
+			confirmPw.style.color = "#0000ff";
+			confirmPw.innerHTML = "비밀번호가 일치합니다!";
+			pwPass = true;
+
+		} else {
+			confirmPw.style.color = "#ff0000";
+			confirmPw.innerHTML = "비밀번호를 확인해주세요!";
+		}
+		return pwPass;
+	}
+	// 이메일 인증
+	function confirmEmail(){
+		let mEmail = document.getElementById("mEmail").value;
+		let emailConfirmText = document.getElementById("emailConfirmText");
+
+		$.ajax({
+			type : "GET" ,
+			url : "A_emailConfirm" ,
+			data : {"mEmail" : mEmail} ,
+			dataType : "text" ,
+			success : function(data){
+				alert("입력하신 이메일로 인증번호가 발송됐습니다!");
+				emailConfirmText.innerHTML ="<input type='hidden' id='check2' value='" + data + "'>"
+						+ "<br/><input type='text' placeholder='인증번호 입력' id='emailKey'>"
+						+ " <input type='button' value='확인' onclick='keyCheck()'>"
+						+ "<br/><span id='check1'></span>";
+			} ,
+			error : function(){
+				alert("인증번호 발송에 실패했습니다!");
+			}
+
+		});
+	}
+
+	// 인증번호 확인
+	function keyCheck(){
+		let emailKey = document.getElementById("emailKey").value;
+		let check2 = document.getElementById("check2").value;
+		let check1 = document.getElementById("check1");
+
+		let emailPass = false;
+
+		if(emailKey==check2){
+			check1.style.color = "#0000ff";
+			check1.innerHTML = "인증번호가 일치합니다!";
+			emailPass = true;
+
+		} else{
+			check1.style.color = "#ff0000";
+			check1.innerHTML = "인증번호가 일치하지 않습니다!";
+		}
+		return emailPass;
+	}
+
+</script>
+
 
 </html>

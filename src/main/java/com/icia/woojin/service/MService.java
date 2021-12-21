@@ -3,6 +3,8 @@ package com.icia.woojin.service;
 import com.icia.woojin.dao.MDAO;
 import com.icia.woojin.dto.MEMBER;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -21,6 +23,11 @@ public class MService {
     @Autowired
     private HttpSession session;
 
+    @Autowired
+    private PasswordEncoder pwEnc;
+
+    @Autowired
+    private JavaMailSender mailSender;
 
 
     private ModelAndView mav = new ModelAndView();
@@ -29,6 +36,7 @@ public class MService {
     public ModelAndView mJoin(MEMBER member) throws IOException {
         System.out.println("[2]service : member -> " + member);
 
+        member.setMPw(pwEnc.encode(member.getMPw()));
 
         // (1) 파일 불러오기
         MultipartFile mProfile = member.getMProfile();
@@ -55,6 +63,8 @@ public class MService {
             member.setMProfileName("default.png");
         }
 
+
+
         // Q. 어떤 작업? 가입(입력)
         // Q. 입력, 수정, 삭제 시 int result 사용!
         int result = mdao.mJoin(member);
@@ -75,12 +85,19 @@ public class MService {
     public ModelAndView mLogin(MEMBER member) {
         System.out.println("[2]service : member -> " + member);
 
+        MEMBER member1 = mdao.mLogin(member);
+
+        if(pwEnc.matches(member.getMPw(),member1.getMPw())){
+            System.out.println("비밀번호 일치!");
+            mav.setViewName("index");
+        }
+
+
         // 입력한 id와 pw가 일치할 경우
         // id가 존재하는지 존재하지 않는지.. 존재한다면 id를 가져온다!
 
         // String loginId = mdao.mLogin(member);
 
-        MEMBER member1 = mdao.mLogin(member);
 
         System.out.println("로그인 성공시 ======= \n" + member1);
 
@@ -199,5 +216,23 @@ public class MService {
         }
 
         return mav;
+    }
+
+
+    // 아이디 중복검사
+    public String idOverlap(String mId) {
+        System.out.println("[2]service : MId -> " + mId);
+
+        String idCheck = mdao.idOverlap(mId);
+
+        String result = null;
+
+        if(idCheck==null) {
+            result = "OK";   // 중복x
+        } else {
+            result = "NO";   // 중복o
+        }
+        System.out.println("[4]service : result -> " + result);
+        return result;
     }
 }

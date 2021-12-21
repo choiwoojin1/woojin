@@ -181,7 +181,7 @@
 								<a href="bList" class="btn btn-primary">게시글목록</a>
 
 								<a th:if="${session.loginId ne null}" href="writeForm" class="btn btn-primary">글작성</a>
-								<a th:if="${session.loginId ne null}" href="logout" class="btn btn-primary">로그아웃</a>
+								<a th:if="${session.loginId ne null}" href="mLogout" class="btn btn-primary">로그아웃</a>
 								<!--<p th:if="${session.loginId ne null}" th:text="${session.loginId} + '님 로그인'"></p>-->
 								<!-- before_index 끝 -->
 							</div>
